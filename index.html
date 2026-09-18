@@ -640,7 +640,7 @@ function renderSeasonPreviewHTML(season){
   const um = getDynamicUpcomingMatch(season);
   const standings = season.regular.standings;
   return `
-    <div class="page-hero" style="background:linear-gradient(135deg, var(--ink) 0%, #16181d 45%, var(--gold) 220%);">
+    <div class="page-hero" onclick="currentOpponentScout='${um.opponent.replace(/'/g,"\\'")}'; renderOverview();" style="cursor:pointer; background:linear-gradient(135deg, var(--ink) 0%, #16181d 45%, var(--gold) 220%);">
       <div style="flex:1;">
         <div class="match-meta" style="color:var(--gold); font-weight:700; letter-spacing:.1em;">${t('next_match_label')} &middot; ${um.competition}</div>
         <h1 style="margin-top:6px;">Közgáz SC és DSK/A &ndash; ${um.opponent}</h1>
@@ -648,6 +648,7 @@ function renderSeasonPreviewHTML(season){
           <span>&#128197;&nbsp; ${um.date}</span>
           <span>&#128205;&nbsp; ${um.venue}</span>
         </div>
+        <div class="sub" style="margin-top:8px; font-size:12px; opacity:.85;">📊 ${t('full_scouting')} &#8250;</div>
       </div>
     </div>
     <div class="section-title">${season.groupName} — ${t('group_standings')}</div>
@@ -827,12 +828,12 @@ function upcomingMatchCardHTML(s){
   const homeAwayLabel = s.home ? t('home') : t('away');
   return `
   <div class="match-card">
-    <div class="match-head" style="cursor:default;">
+    <div class="match-head" onclick="currentOpponentScout='${s.opponent.replace(/'/g,"\\'")}'; navigateToOverviewScouting();" style="cursor:pointer;">
       <div>
         <div class="match-meta">${s.round}. ${t('round')} · ${dateStr}${s.time? ', '+s.time : ' · '+t('no_time_yet')} · ${homeAwayLabel}</div>
         <div class="match-opp">${s.home ? 'Közgáz SC és DSK/A – ' + s.opponent : s.opponent + ' – Közgáz SC és DSK/A'}</div>
       </div>
-      <div class="match-score"><span class="sub" style="font-size:13px;">${t('not_played_yet')}</span></div>
+      <div class="match-score"><span class="sub" style="font-size:13px;">${t('not_played_yet')}</span><div class="sub" style="font-size:11px; margin-top:4px;">📊 ${t('full_scouting')} &#8250;</div></div>
     </div>
   </div>`;
 }
