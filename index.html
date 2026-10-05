@@ -974,8 +974,10 @@ function getCareerRows(name){
     const season = SEASONS[s];
     if(season.available && season.regular){
       const stats = statsByNameFor(season.regular)[name];
-      if(stats && stats.regular && stats.regular.gp>=2){
-        rows.push({season:s, ...stats.regular});
+      // folyamatban lévő szezon: már 1 meccs után is bekerül, hogy mindig a legfrissebb átlag látszódjon
+      const minGp = season.isPreview ? 1 : 2;
+      if(stats && stats.regular && stats.regular.gp>=minGp){
+        rows.push({season:s, live:!!season.isPreview, ...stats.regular});
       }
     }
   });
@@ -984,9 +986,11 @@ function getCareerRows(name){
 
 function lineChartSVG(rows, key, label, fmt){
   fmt = fmt || (v=>v);
+  rows = rows.filter(r=>r[key]!==null && r[key]!==undefined); // pl. 0 büntetőkísérletnél nincs %
+  if(!rows.length) return '';
   const vals = rows.map(r=>Number(r[key])||0);
   const n = rows.length;
-  const W = 600, H = 165, padL = 20, padR = 20, padT = 32, padB = 34;
+  const W = 600, H = 165, padL = 42, padR = 42, padT = 32, padB = 34;
   const innerW = W - padL - padR, innerH = H - padT - padB;
   const maxV = Math.max(...vals, 1) * 1.25;
   const minV = 0;
@@ -1009,7 +1013,7 @@ function lineChartSVG(rows, key, label, fmt){
   const dots = pts.map((p,i)=>`
     <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4.5" fill="#fff" stroke="var(--red)" stroke-width="2.5"/>
     <text x="${p.x.toFixed(1)}" y="${(p.y-13).toFixed(1)}" text-anchor="middle" font-size="14" font-weight="700" font-family="Oswald" fill="var(--ink)">${fmt(p.v)}</text>
-    <text x="${p.x.toFixed(1)}" y="${(padT+innerH+22).toFixed(1)}" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--muted)" letter-spacing="0.3">${rows[i].season}</text>
+    <text x="${p.x.toFixed(1)}" y="${(padT+innerH+22).toFixed(1)}" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--muted)" letter-spacing="0.3">${rows[i].season}${rows[i].live?'*':''}</text>
   `).join("");
   return `
     <div class="profile-subtitle" style="margin-top:16px; font-size:11.5px;">${label}</div>
@@ -1033,7 +1037,11 @@ function careerComparisonHTML(name){
   const career = getCareerRows(name);
   if(career.length < 2) return "";
   const title = LANG==='hu' ? 'Szezonok összehasonlítása (alapszakasz)' : 'Season comparison (regular season)';
-  const note = LANG==='hu' ? `${career.map(r=>r.season).join(' &#8594; ')} — hogyan változtak a mutatói szezonról szezonra.` : `${career.map(r=>r.season).join(' &#8594; ')} — how their numbers changed season by season.`;
+  const liveRow = career.find(r=>r.live);
+  const liveNote = liveRow ? (LANG==='hu'
+    ? ` *A ${liveRow.season} szezon folyamatban van (${liveRow.gp} meccs után) — az átlagok minden forduló után frissülnek, az összesített számok (meccsek, dobások) még nőni fognak.`
+    : ` *The ${liveRow.season} season is in progress (after ${liveRow.gp} game${liveRow.gp>1?'s':''}) — averages update after every round, totals (games, made shots) will keep growing.`) : '';
+  const note = (LANG==='hu' ? `${career.map(r=>r.season).join(' &#8594; ')} — hogyan változtak a mutatói szezonról szezonra.` : `${career.map(r=>r.season).join(' &#8594; ')} — how their numbers changed season by season.`) + liveNote;
   return `
   <div class="chart-wrap">
     <div class="profile-subtitle" style="margin-top:0;">${title}</div>
